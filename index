@@ -701,28 +701,4 @@
         document.getElementById('date').valueAsDate = new Date();
     </script>
 </body>
-<script>
-document.getElementById("withdrawForm").addEventListener("submit", function(event){
-  event.preventDefault();
-  const url = "https://script.google.com/macros/s/AKfycbxqJE9wIhsKPchx77EWbGKqdkTwMrnMj39j9_8GsoCAKtAG45oYaO25Xvc3ZgWHjx3B/exec"; // ใส่ URL ที่ได้จาก Apps Script
-
-  const form = event.target;
-  const data = {
-    name: form.name.value,
-    item: form.item.value,
-    amount: form.amount.value,
-  };
-
-  fetch(url, {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-  .then(r => r.text())
-  .then(msg => alert("ส่งข้อมูลสำเร็จ!"))
-  .catch(e => alert("เกิดข้อผิดพลาด: " + e));
-});
-</script>
 </html>
