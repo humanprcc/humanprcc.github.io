@@ -701,4 +701,228 @@
         document.getElementById('date').valueAsDate = new Date();
     </script>
 </body>
+    <body>
+  <div class="container">
+    <div class="header">
+      <div class="header-content">
+        <h1>ระบบจัดการเบิกจ่ายของที่ระลึก</h1>
+        <p>เพื่อแอดมินและเจ้าหน้าที่</p>
+      </div>
+      <div class="user-info" id="user-info">
+        <span class="user-role" id="user-role">ยังไม่ได้ล็อกอิน</span><br>
+        <button onclick="logout()" class="btn-logout" style="display:none;" id="btn-logout">ออกจากระบบ</button>
+      </div>
+    </div>
+
+    <!-- Login Section -->
+    <div id="login-section" class="login-section">
+      <div class="login-form">
+        <h2>เข้าสู่ระบบ</h2>
+        <div class="form-group">
+          <label>เลือกบทบาท</label>
+          <select id="role-select">
+            <option value="admin">แอดมิน</option>
+            <option value="officer">เจ้าหน้าที่</option>
+          </select>
+        </div>
+        <button onclick="login()">เข้าสู่ระบบ</button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="main-content" style="display:none;">
+      <!-- ฝั่งซ้าย: สินค้า -->
+      <div>
+        <h3>รายการของที่ระลึก</h3>
+        <div id="souvenir-list" class="souvenir-select">
+          <!-- dynamic JS -->
+        </div>
+      </div>
+      <!-- ฝั่งขวา: รายการเบิก & อนุมัติ -->
+      <div>
+        <h3>แบบฟอร์มขอเบิก</h3>
+        <form id="requisition-form" onsubmit="submitRequisition(event)">
+          <div id="form-items"></div>
+          <button type="submit">ส่งคำขอเบิก</button>
+        </form>
+        <div class="summary" id="summary-section" style="display:none;">
+          <h4>สรุปรายการที่ขอเบิก</h4>
+          <div id="summary-list"></div>
+        </div>
+      </div>
+      <!-- รายการเบิก -->
+      <div class="expense-list" style="grid-column: span 2;">
+        <h3>รายการเบิก (อนุมัติ/ปฏิเสธ)</h3>
+        <div id="expense-list"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const souvenirs = [
+  {id:1, name:'แก้วน้ำ', stock:10, img:""},
+  {id:2, name:'เสื้อยืด', stock:5, img:""},
+  {id:3, name:'หมวก', stock:15, img:""},
+];
+
+let requisitionItems = {};
+let expenses = [];
+let currentUser = {role:null};
+
+function renderSouvenirs() {
+  const list = document.getElementById('souvenir-list');
+  list.innerHTML = '';
+  souvenirs.forEach(item => {
+    list.innerHTML += `
+      <div class="souvenir-item" id="souvenir-item-${item.id}">
+        <div class="souvenir-info">
+          <div class="souvenir-image">
+            <img id="preview-${item.id}" src="${item.img||'https://cdn-icons-png.flaticon.com/512/771/771218.png'}" alt="Img" />
+          </div>
+          <div class="image-upload" style="${currentUser.role==='admin' ? '' : 'display:none'}">
+            <input type="file" accept="image/*" onchange="onUploadImage(event,${item.id})">
+          </div>
+          <div class="souvenir-name">${item.name}</div>
+          <div class="stock-info">คงเหลือ: <span id="stock-${item.id}">${item.stock}</span></div>
+        </div>
+        <div class="stock-actions" style="${currentUser.role==='admin' ? '' : 'display:none' }">
+          <button onclick="changeStock(${item.id}, -1)">-</button>
+          <input type="number" id="stock-input-${item.id}" value="${item.stock}" readonly>
+          <button onclick="changeStock(${item.id}, 1)">+</button>
+        </div>
+      </div>
+    `;
+  });
+  renderFormItems();
+}
+function onUploadImage(e, id) {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    souvenirs.find(sv=>sv.id===id).img = ev.target.result;
+    document.getElementById(`preview-${id}`).src = ev.target.result;
+  }
+  if(file) reader.readAsDataURL(file);
+}
+
+function changeStock(id, delta){
+  let item = souvenirs.find(sv=>sv.id===id);
+  item.stock = Math.max(0, item.stock + delta);
+  document.getElementById(`stock-${id}`).innerText = item.stock;
+  document.getElementById(`stock-input-${id}`).value = item.stock;
+}
+
+function renderFormItems(){
+  let html = '';
+  souvenirs.forEach(item=>{
+    html += `
+      <div class="form-group">
+        <label>${item.name} (${item.stock} ชิ้น)</label>
+        <input type="number" min="0" max="${item.stock}" id="rq-${item.id}" name="rq-${item.id}" class="quantity-input" value="0" ${item.stock===0?'disabled':''}>
+      </div>
+    `;
+  });
+  document.getElementById('form-items').innerHTML = html;
+}
+
+function submitRequisition(e){
+  e.preventDefault();
+  let req = [];
+  souvenirs.forEach(item=>{
+    let qty = parseInt(document.getElementById(`rq-${item.id}`).value) || 0;
+    if(qty>0){
+      req.push({id:item.id, name:item.name, qty, status:"pending"});
+    }
+  });
+  if(req.length === 0){
+    alert("กรุณาเลือกของที่ต้องการเบิกอย่างน้อยหนึ่งชิ้น");
+    return;
+  }
+  let expId = Date.now();
+  expenses.push({id:expId, items:req, status:'pending', owner: currentUser.role});
+  renderExpenses();
+  // สรุปรายการ
+  document.getElementById('summary-section').style.display = '';
+  let summaryHTML = req.map(i=>`<div class="summary-item"><span>${i.name}</span><span class="summary-quantity">${i.qty}</span></div>`).join('');
+  document.getElementById('summary-list').innerHTML = summaryHTML;
+}
+
+function renderExpenses(){
+  const el = document.getElementById('expense-list');
+  el.innerHTML = '';
+  if(expenses.length===0){
+    el.innerHTML = '<div style="color:#aaa;">ยังไม่มีรายการ</div>';
+    return;
+  }
+  expenses.forEach(exp=>{
+    let btnHTML = '';
+    if(currentUser.role === 'admin' && exp.status==='pending'){
+      btnHTML = `
+        <button class="btn-approve" onclick="approveExpense(${exp.id})">อนุมัติ</button>
+        <button class="btn-reject" onclick="rejectExpense(${exp.id})">ปฏิเสธ</button>
+      `;
+    }
+    el.innerHTML += `
+      <div class="expense-item">
+        <div class="expense-header">
+          <div class="expense-info">
+            <div class="expense-name">#${exp.id} • โดย: ${exp.owner}</div>
+            <div class="expense-details">${exp.items.map(i=>`${i.name} (${i.qty} ชิ้น)`).join(', ')}</div>
+          </div>
+          <span class="expense-status status-${exp.status}">
+            ${exp.status==='pending'?'รออนุมัติ':exp.status==='approved'?'อนุมัติแล้ว':'ถูกปฏิเสธ'}
+          </span>
+        </div>
+        <div class="expense-actions">${btnHTML}</div>
+      </div>
+    `;
+  });
+}
+
+function approveExpense(expId){
+  let exp = expenses.find(e=>e.id===expId);
+  // ตรวจสอบ stock
+  let ok = exp.items.every(i=>{
+    let item = souvenirs.find(sv=>sv.id===i.id);
+    return item.stock >= i.qty;
+  });
+  if(!ok){
+    alert("จำนวนของในคลังไม่พอกรุณาตรวจสอบใหม่");
+    return;
+  }
+  exp.items.forEach(i=>{
+    let item = souvenirs.find(sv=>sv.id===i.id);
+    item.stock -= i.qty;
+  });
+  exp.status = 'approved';
+  renderSouvenirs();
+  renderExpenses();
+}
+
+function rejectExpense(expId){
+  let exp = expenses.find(e=>e.id===expId);
+  exp.status = 'rejected';
+  renderExpenses();
+}
+
+// Login/Logout
+function login(){
+  const select = document.getElementById('role-select');
+  currentUser.role = select.value;
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('main-content').style.display = '';
+  document.getElementById('user-role').innerText = currentUser.role==='admin'? 'แอดมิน' : 'เจ้าหน้าที่';
+  document.getElementById('btn-logout').style.display = '';
+  renderSouvenirs();
+  renderExpenses();
+}
+function logout(){
+  currentUser = {role:null};
+  document.getElementById('login-section').style.display = '';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('user-role').innerText = 'ยังไม่ได้ล็อกอิน';
+  document.getElementById('btn-logout').style.display = 'none';
+}
+</script>
+</body>
 </html>
