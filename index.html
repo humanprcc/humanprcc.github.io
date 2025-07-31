@@ -1,704 +1,1088 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการเบิกจ่ายของที่ระลึก</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+import React, { useState, useEffect } from 'react';
+import {
+  Home, Package, PlusCircle, Edit, Trash2, List, LogOut, User, Building2, CalendarDays, ScrollText, ClipboardList,
+  ChevronDown, ChevronUp, Image as ImageIcon, X, Save, CheckCircle, AlertCircle, Search, Filter, Printer
+} from 'lucide-react';
+import { PieChart, Pie, Tooltip, Legend, Cell, ResponsiveContainer } from 'recharts';
+// Removed: import jsPDF from 'jspdf';
+// Removed: import 'jspdf-autotable';
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+// Predefined data for departments and initial souvenirs
+const predefinedDepartments = [
+  'งานบริหารทั่วไป', 'งานการเงิน การคลังและพัสดุ', 'งานยุทธศาสตร์และพัฒนาองค์กร',
+  'งานบริการการศึกษาและพัฒนาคุณภาพนักศึกษา', 'งานบริหารงานวิจัย บริการวิชาการและวิเทศสัมพันธ์',
+  'ภาควิชาการท่องเที่ยว', 'ภาควิชาจิตวิทยา', 'ภาควิชาบรรณารักษศาสตร์และสารสนเทศ',
+  'ภาควิชาประวัติศาสตร์', 'ภาควิชาปรัชญาและศาสนา', 'ภาควิชาภาษาตะวันตก',
+  'ภาควิชาภาษาตะวันออก', 'ภาควิชาภาษาไทย', 'ภาควิชาภาษาอังกฤษ',
+  'ภาควิชามนุษยสัมพันธ์', 'สาขาวิชามนุษยศาสตร์และความยั่งยืน', 'HAS Center',
+  'ศูนย์บูรณาการมนุษยาภิวัฒน์'
+];
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
+const initialSouvenirs = [
+  { id: 'S001', name: 'ถุงกระดาษ', quantity: 100, imageUrl: 'https://placehold.co/100x100/ADD8E6/000000?text=ถุงกระดาษ' },
+  { id: 'S002', name: 'แก้วเก็บความเย็น', quantity: 50, imageUrl: 'https://placehold.co/100x100/FFD700/000000?text=แก้วเก็บความเย็น' },
+  { id: 'S003', name: 'หมวก', quantity: 75, imageUrl: 'https://placehold.co/100x100/90EE90/000000?text=หมวก' },
+  { id: 'S004', name: 'สมุดฉีก', quantity: 120, imageUrl: 'https://placehold.co/100x100/FFB6C1/000000?text=สมุดฉีก' },
+];
 
-        .header {
-            background: linear-gradient(45deg, #ff6b6b, #ffa726);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+// Colors for the Pie Chart
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57', '#a4de6c', '#00C49F'];
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
+function App() {
+  const [currentPage, setCurrentPage] = useState('login'); // 'login', 'dashboard', 'souvenirs', 'disburse', 'reports'
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [souvenirs, setSouvenirs] = useState(initialSouvenirs);
+  const [disbursements, setDisbursements] = useState([]);
+  const [message, setMessage] = useState({ type: '', text: '' }); // For success/error messages
 
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
+  // Simulate user authentication
+  const handleLogin = (username, password) => {
+    if (username === 'admin' && password === 'password') {
+      setLoggedInUser({ username: 'admin' });
+      setCurrentPage('dashboard');
+      showMessage('success', 'เข้าสู่ระบบสำเร็จ!');
+    } else {
+      showMessage('error', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    }
+  };
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            padding: 30px;
-        }
+  const handleRegister = (username, password) => {
+    // In a real app, this would save to a database.
+    // For this demo, we just allow 'admin' as the only user.
+    if (username === 'admin') {
+      showMessage('error', 'ชื่อผู้ใช้นี้มีอยู่แล้ว');
+    } else {
+      showMessage('success', 'สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+    }
+  };
 
-        .card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease;
-        }
+  const handleLogout = () => {
+    setLoggedInUser(null);
+    setCurrentPage('login');
+    showMessage('info', 'ออกจากระบบแล้ว');
+  };
 
-        .card:hover {
-            transform: translateY(-5px);
-        }
+  const showMessage = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage({ type: '', text: '' }), 3000); // Clear message after 3 seconds
+  };
 
-        .card h3 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            border-bottom: 3px solid #ff6b6b;
-            padding-bottom: 10px;
-        }
+  const addSouvenir = (newSouvenir) => {
+    setSouvenirs(prev => [...prev, { ...newSouvenir, id: `S${String(prev.length + 1).padStart(3, '0')}` }]);
+    showMessage('success', 'เพิ่มของที่ระลึกสำเร็จ!');
+  };
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+  const updateSouvenir = (updatedSouvenir) => {
+    setSouvenirs(prev => prev.map(s => s.id === updatedSouvenir.id ? updatedSouvenir : s));
+    showMessage('success', 'แก้ไขของที่ระลึกสำเร็จ!');
+  };
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #555;
-        }
+  const deleteSouvenir = (id) => {
+    setSouvenirs(prev => prev.filter(s => s.id !== id));
+    showMessage('success', 'ลบของที่ระลึกสำเร็จ!');
+  };
 
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
+  const addDisbursement = (newDisbursement) => {
+    // Update souvenir quantities
+    const updatedSouvenirs = souvenirs.map(s => {
+      const disbursedItem = newDisbursement.items.find(item => item.souvenirId === s.id);
+      if (disbursedItem) {
+        return { ...s, quantity: s.quantity - disbursedItem.quantity };
+      }
+      return s;
+    });
+    setSouvenirs(updatedSouvenirs);
 
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #ff6b6b;
-        }
+    setDisbursements(prev => [...prev, { ...newDisbursement, id: `D${String(prev.length + 1).padStart(3, '0')}` }]);
+    showMessage('success', 'บันทึกการเบิกจ่ายสำเร็จ!');
+  };
 
-        button {
-            background: linear-gradient(45deg, #ff6b6b, #ffa726);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'login':
+        return <AuthScreen onLogin={handleLogin} onRegister={handleRegister} message={message} />;
+      case 'dashboard':
+        return <Dashboard setCurrentPage={setCurrentPage} loggedInUser={loggedInUser} />;
+      case 'souvenirs':
+        return <SouvenirManagement
+          souvenirs={souvenirs}
+          addSouvenir={addSouvenir}
+          updateSouvenir={updateSouvenir}
+          deleteSouvenir={deleteSouvenir}
+          showMessage={showMessage}
+        />;
+      case 'disburse':
+        return <DisbursementForm
+          souvenirs={souvenirs}
+          departments={predefinedDepartments}
+          addDisbursement={addDisbursement}
+          showMessage={showMessage}
+        />;
+      case 'reports':
+        return <ReportSummary
+          disbursements={disbursements}
+          souvenirs={souvenirs}
+          departments={predefinedDepartments}
+        />;
+      default:
+        return <AuthScreen onLogin={handleLogin} onRegister={handleRegister} message={message} />;
+    }
+  };
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
-        }
-
-        .souvenir-select {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .souvenir-item {
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            padding: 15px;
-            background: white;
-            transition: all 0.3s ease;
-        }
-
-        .souvenir-item:hover {
-            border-color: #ff6b6b;
-            transform: translateY(-2px);
-        }
-
-        .souvenir-info {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .souvenir-image {
-            width: 50px;
-            height: 50px;
-            background: #f0f0f0;
-            border-radius: 8px;
-            margin: 0 auto 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .souvenir-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 13px;
-        }
-
-        .quantity-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        .quantity-input:focus {
-            border-color: #ff6b6b;
-            outline: none;
-        }
-
-        .expense-list {
-            grid-column: span 2;
-        }
-
-        .expense-item {
-            background: white;
-            border: 1px solid #e1e5e9;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .expense-item:hover {
-            border-color: #ff6b6b;
-            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.1);
-        }
-
-        .expense-info {
-            flex-grow: 1;
-        }
-
-        .expense-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .expense-details {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .expense-quantity {
-            font-size: 18px;
-            font-weight: 700;
-            color: #ff6b6b;
-        }
-
-        .delete-btn {
-            background: #dc3545;
-            padding: 8px 15px;
-            font-size: 14px;
-            margin-left: 15px;
-        }
-
-        .delete-btn:hover {
-            background: #c82333;
-        }
-
-        .summary {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .summary h4 {
-            font-size: 1.3em;
-            margin-bottom: 15px;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .summary-item:last-child {
-            border-bottom: none;
-        }
-
-        .summary-quantity {
-            font-weight: 700;
-            font-size: 1.1em;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .expense-list {
-                grid-column: span 1;
-            }
-
-            .souvenir-select {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎁 ระบบจัดการเบิกจ่ายของที่ระลึก</h1>
-            <p>บันทึกและติดตามการเบิกของที่ระลึกจากคลังของหน่วยงาน</p>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-inter text-gray-800 flex flex-col">
+      {/* Global Message Display */}
+      {message.text && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2
+          ${message.type === 'success' ? 'bg-green-500 text-white' :
+            message.type === 'error' ? 'bg-red-500 text-white' :
+            'bg-blue-500 text-white'}`}>
+          {message.type === 'success' && <CheckCircle size={20} />}
+          {message.type === 'error' && <AlertCircle size={20} />}
+          {message.type === 'info' && <List size={20} />}
+          <span>{message.text}</span>
         </div>
+      )}
 
-        <div class="main-content">
-            <div class="card">
-                <h3>เพิ่มรายการเบิก</h3>
-                <form id="expenseForm">
-                    <div class="form-group">
-                        <label>เลือกของที่ระลึกและระบุจำนวน:</label>
-                        <div class="souvenir-select">
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">🛍️</div>
-                                    <div class="souvenir-name">ถุงกระดาษ</div>
-                                </div>
-                                <input type="number" id="quantity_bag" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">🥤</div>
-                                    <div class="souvenir-name">แก้วเก็บความเย็น</div>
-                                </div>
-                                <input type="number" id="quantity_cup" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">🧢</div>
-                                    <div class="souvenir-name">หมวก</div>
-                                </div>
-                                <input type="number" id="quantity_hat" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">📝</div>
-                                    <div class="souvenir-name">สมุดฉีก</div>
-                                </div>
-                                <input type="number" id="quantity_notebook" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="department">หน่วยงาน:</label>
-                        <select id="department" required>
-                            <option value="">เลือกหน่วยงาน</option>
-                            <option value="งานบริหารทั่วไป">งานบริหารทั่วไป</option>
-                            <option value="งานการเงิน การคลังและพัสดุ">งานการเงิน การคลังและพัสดุ</option>
-                            <option value="งานยุทธศาสตร์และพัฒนาองค์กร">งานยุทธศาสตร์และพัฒนาองค์กร</option>
-                            <option value="งานบริการการศึกษาและพัฒนาคุณภาพนักศึกษา">งานบริการการศึกษาและพัฒนาคุณภาพนักศึกษา</option>
-                            <option value="งานบริหารงานวิจัย บริการวิชาการและวิเทศสัมพันธ์">งานบริหารงานวิจัย บริการวิชาการและวิเทศสัมพันธ์</option>
-                            <option value="ภาควิชาการท่องเที่ยว">ภาควิชาการท่องเที่ยว</option>
-                            <option value="ภาควิชาจิตวิทยา">ภาควิชาจิตวิทยา</option>
-                            <option value="ภาควิชาบรรณารักษศาสตร์และสารสนเทศ">ภาควิชาบรรณารักษศาสตร์และสารสนเทศ</option>
-                            <option value="ภาควิชาประวัติศาสตร์">ภาควิชาประวัติศาสตร์</option>
-                            <option value="ภาควิชาปรัชญาและศาสนา">ภาควิชาปรัชญาและศาสนา</option>
-                            <option value="ภาควิชาภาษาตะวันตก">ภาควิชาภาษาตะวันตก</option>
-                            <option value="ภาควิชาภาษาตะวันออก">ภาควิชาภาษาตะวันออก</option>
-                            <option value="ภาควิชาภาษาไทย">ภาควิชาภาษาไทย</option>
-                            <option value="ภาควิชาภาษาอังกฤษ">ภาควิชาภาษาอังกฤษ</option>
-                            <option value="ภาควิชามนุษยสัมพันธ์">ภาควิชามนุษยสัมพันธ์</option>
-                            <option value="สาขาวิชามนุษยศาสตร์และความยั่งยืน">สาขาวิชามนุษยศาสตร์และความยั่งยืน</option>
-                            <option value="HAS Center">HAS Center</option>
-                            <option value="ศูนย์บูรณาการมนุษยาภิวัฒน์">ศูนย์บูรณาการมนุษยาภิวัฒน์</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="quantity">จำนวนรวม (ชิ้น):</label>
-                        <input type="number" id="totalQuantity" readonly style="background: #f8f9fa; color: #666;">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="date">วันที่เบิก:</label>
-                        <input type="date" id="date" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="notes">หมายเหตุ:</label>
-                        <textarea id="notes" rows="3" placeholder="ระบุวัตถุประสงค์ในการเบิก หรือรายละเอียดเพิ่มเติม"></textarea>
-                    </div>
-                    
-                    <button type="submit">บันทึกรายการเบิก</button>
-                </form>
-            </div>
+      {loggedInUser && (
+        <nav className="bg-white shadow-md p-4 flex justify-between items-center rounded-b-xl">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-indigo-600">
+              <Package className="inline-block mr-2" />
+              ระบบจัดการของที่ระลึก
+            </h1>
+            <button
+              onClick={() => setCurrentPage('dashboard')}
+              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200"
+            >
+              <Home size={18} className="mr-2" /> แดชบอร์ด
+            </button>
+            <button
+              onClick={() => setCurrentPage('souvenirs')}
+              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200"
+            >
+              <Package size={18} className="mr-2" /> จัดการของที่ระลึก
+            </button>
+            <button
+              onClick={() => setCurrentPage('disburse')}
+              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200"
+            >
+              <PlusCircle size={18} className="mr-2" /> บันทึกเบิกจ่าย
+            </button>
+            <button
+              onClick={() => setCurrentPage('reports')}
+              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200"
+            >
+              <List size={18} className="mr-2" /> รายงานสรุป
+            </button>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-600 flex items-center">
+              <User size={18} className="mr-2" /> ยินดีต้อนรับ, {loggedInUser.username}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-200 shadow-md"
+            >
+              <LogOut size={18} className="mr-2" /> ออกจากระบบ
+            </button>
+          </div>
+        </nav>
+      )}
 
-            <div class="card">
-                <h3>สรุปรายการ</h3>
-                
-                <!-- สต็อกคงเหลือ -->
-                <div style="background: linear-gradient(45deg, #17a2b8, #20c997); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h4>📦 สต็อกคงเหลือ</h4>
-                    <div id="stockSummary">
-                        <div class="summary-item">
-                            <span>🛍️ ถุงกระดาษ</span>
-                            <span class="summary-quantity">150 ชิ้น</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>🥤 แก้วเก็บความเย็น</span>
-                            <span class="summary-quantity">100 ชิ้น</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>🧢 หมวก</span>
-                            <span class="summary-quantity">40 ชิ้น</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>📝 สมุดฉีก</span>
-                            <span class="summary-quantity">30 ชิ้น</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="summary">
-                    <h4>📊 สถิติการเบิกของที่ระลึก</h4>
-                    <div id="itemSummary">
-                        <p style="color: rgba(255,255,255,0.8); padding: 20px;">ยังไม่มีข้อมูล</p>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <h4>สรุปตามหน่วยงาน:</h4>
-                    <div id="departmentSummary">
-                        <p style="text-align: center; color: #666; padding: 20px;">ยังไม่มีข้อมูล</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card expense-list">
-                <h3>รายการการเบิก</h3>
-                <div id="expenseList">
-                    <p style="text-align: center; color: #666; padding: 20px;">ยังไม่มีรายการ เริ่มเพิ่มรายการแรกของคุณเลย!</p>
-                </div>
-            </div>
-        </div>
+      <main className="flex-grow p-8">
+        {renderPage()}
+      </main>
     </div>
+  );
+}
 
-    <script>
-        let expenses = [];
-        let nextId = 1;
+// --- AuthScreen Component ---
+function AuthScreen({ onLogin, onRegister, message }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
 
-        // ระบบจัดการสต็อก
-        let inventory = {
-            'ถุงกระดาษ': { stock: 150, used: 0 },
-            'แก้วเก็บความเย็น': { stock: 100, used: 0 },
-            'หมวก': { stock: 40, used: 0 },
-            'สมุดฉีก': { stock: 30, used: 0 }
-        };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isRegisterMode) {
+      onRegister(username, password);
+    } else {
+      onLogin(username, password);
+    }
+  };
 
-        // อัปเดตการแสดงผลสต็อก
-        function updateStockDisplay() {
-            const stockItems = [
-                { id: 'quantity_bag', item: 'ถุงกระดาษ' },
-                { id: 'quantity_cup', item: 'แก้วเก็บความเย็น' },
-                { id: 'quantity_hat', item: 'หมวก' },
-                { id: 'quantity_notebook', item: 'สมุดฉีก' }
-            ];
+  return (
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-200">
+        <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">
+          {isRegisterMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="username">
+              ชื่อผู้ใช้
+            </label>
+            <input
+              type="text"
+              id="username"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="password">
+              รหัสผ่าน
+            </label>
+            <input
+              type="password"
+              id="password"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition duration-200 shadow-lg transform hover:scale-105"
+          >
+            {isRegisterMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+          </button>
+        </form>
+        <p className="text-center text-gray-600 mt-6">
+          {isRegisterMode ? 'มีบัญชีอยู่แล้ว?' : 'ยังไม่มีบัญชี?'}
+          <button
+            onClick={() => setIsRegisterMode(!isRegisterMode)}
+            className="text-indigo-600 hover:underline ml-2 font-medium"
+          >
+            {isRegisterMode ? 'เข้าสู่ระบบที่นี่' : 'สมัครสมาชิกที่นี่'}
+          </button>
+        </p>
+        <p className="text-center text-sm text-gray-500 mt-4">
+          (สำหรับทดสอบ: ชื่อผู้ใช้: <span className="font-semibold">admin</span>, รหัสผ่าน: <span className="font-semibold">password</span>)
+        </p>
+      </div>
+    </div>
+  );
+}
 
-            stockItems.forEach(({ id, item }) => {
-                const input = document.getElementById(id);
-                const remaining = inventory[item].stock - inventory[item].used;
-                input.setAttribute('max', remaining);
-                input.setAttribute('placeholder', `คงเหลือ ${remaining.toLocaleString()}`);
-                
-                // เปลี่ยนสีถ้าสต็อกน้อย
-                const parent = input.closest('.souvenir-item');
-                if (remaining <= 50) {
-                    parent.style.borderColor = '#dc3545';
-                    parent.style.background = '#fff5f5';
-                } else if (remaining <= 100) {
-                    parent.style.borderColor = '#ffc107';
-                    parent.style.background = '#fffdf5';
-                } else {
-                    parent.style.borderColor = '#e1e5e9';
-                    parent.style.background = 'white';
-                }
-            });
-        }
+// --- Dashboard Component ---
+function Dashboard({ setCurrentPage, loggedInUser }) {
+  return (
+    <div className="text-center p-8 bg-white rounded-xl shadow-xl border border-gray-200">
+      <h2 className="text-4xl font-extrabold text-indigo-700 mb-6">
+        ยินดีต้อนรับสู่ระบบจัดการของที่ระลึก!
+      </h2>
+      <p className="text-lg text-gray-700 mb-10">
+        คุณสามารถจัดการของที่ระลึก บันทึกการเบิกจ่าย และดูรายงานสรุปได้จากที่นี่
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <DashboardCard
+          icon={<Package size={48} className="text-indigo-500" />}
+          title="จัดการของที่ระลึก"
+          description="เพิ่ม, แก้ไข, ลบ รายการของที่ระลึกในคลัง"
+          onClick={() => setCurrentPage('souvenirs')}
+        />
+        <DashboardCard
+          icon={<PlusCircle size={48} className="text-green-500" />}
+          title="บันทึกการเบิกจ่าย"
+          description="บันทึกการเบิกจ่ายของที่ระลึกแต่ละครั้ง"
+          onClick={() => setCurrentPage('disburse')}
+        />
+        <DashboardCard
+          icon={<List size={48} className="text-blue-500" />}
+          title="รายงานสรุป"
+          description="ดูรายงานสรุปการเบิกจ่ายทั้งหมด"
+          onClick={() => setCurrentPage('reports')}
+        />
+      </div>
+    </div>
+  );
+}
 
-        // อัปเดตจำนวนรวม
-        function updateTotalQuantity() {
-            const bag = parseInt(document.getElementById('quantity_bag').value) || 0;
-            const cup = parseInt(document.getElementById('quantity_cup').value) || 0;
-            const hat = parseInt(document.getElementById('quantity_hat').value) || 0;
-            const notebook = parseInt(document.getElementById('quantity_notebook').value) || 0;
-            
-            const total = bag + cup + hat + notebook;
-            document.getElementById('totalQuantity').value = total;
+function DashboardCard({ icon, title, description, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center p-6 bg-gray-50 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border border-gray-200 cursor-pointer"
+    >
+      <div className="mb-4">{icon}</div>
+      <h3 className="text-xl font-semibold text-gray-800 mb-2">{title}</h3>
+      <p className="text-gray-600 text-center">{description}</p>
+    </button>
+  );
+}
 
-            // ตรวจสอบสต็อกไม่เพียงพอ
-            const stockWarnings = [];
-            if (bag > (inventory['ถุงกระดาษ'].stock - inventory['ถุงกระดาษ'].used)) {
-                stockWarnings.push('ถุงกระดาษ');
-            }
-            if (cup > (inventory['แก้วเก็บความเย็น'].stock - inventory['แก้วเก็บความเย็น'].used)) {
-                stockWarnings.push('แก้วเก็บความเย็น');
-            }
-            if (hat > (inventory['หมวก'].stock - inventory['หมวก'].used)) {
-                stockWarnings.push('หมวก');
-            }
-            if (notebook > (inventory['สมุดฉีก'].stock - inventory['สมุดฉีก'].used)) {
-                stockWarnings.push('สมุดฉีก');
-            }
+// --- ConfirmationModal Component ---
+function ConfirmationModal({ isOpen, message, onConfirm, onCancel }) {
+  if (!isOpen) return null;
 
-            const totalField = document.getElementById('totalQuantity');
-            if (stockWarnings.length > 0) {
-                totalField.style.borderColor = '#dc3545';
-                totalField.style.background = '#fff5f5';
-                totalField.title = `สต็อกไม่เพียงพอ: ${stockWarnings.join(', ')}`;
-            } else {
-                totalField.style.borderColor = '#28a745';
-                totalField.style.background = '#f8fff8';
-                totalField.title = '';
-            }
-        }
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm border border-gray-200 text-center">
+        <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+        <p className="text-lg font-semibold text-gray-800 mb-6">{message}</p>
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={onCancel}
+            className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition duration-200 shadow-md"
+          >
+            <X size={18} className="inline-block mr-2" /> ยกเลิก
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow-md"
+          >
+            <Trash2 size={18} className="inline-block mr-2" /> ยืนยัน
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        // Event listeners สำหรับ quantity inputs
-        document.querySelectorAll('.quantity-input').forEach(input => {
-            input.addEventListener('input', updateTotalQuantity);
-        });
+// --- SouvenirManagement Component ---
+function SouvenirManagement({ souvenirs, addSouvenir, updateSouvenir, deleteSouvenir, showMessage }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentSouvenir, setCurrentSouvenir] = useState(null); // For editing
+  const [souvenirName, setSouvenirName] = useState('');
+  const [souvenirQuantity, setSouvenirQuantity] = useState('');
+  const [souvenirImageUrl, setSouvenirImageUrl] = useState('');
 
-        // เริ่มต้นแสดงสต็อก
-        updateStockDisplay();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [souvenirToDelete, setSouvenirToDelete] = useState(null);
 
-        function addExpense(expense) {
-            // ตัดสต็อก
-            expense.items.forEach(item => {
-                inventory[item.name].used += item.quantity;  
-            });
-            
-            expenses.push(expense);
-            displayExpenses();
-            updateSummary();
-            updateStockDisplay();
-        }
+  const openAddModal = () => {
+    setCurrentSouvenir(null);
+    setSouvenirName('');
+    setSouvenirQuantity('');
+    setSouvenirImageUrl('');
+    setIsModalOpen(true);
+  };
 
-        function deleteExpense(id) {
-            const expense = expenses.find(e => e.id === id);
-            if (expense) {
-                // คืนสต็อก
-                expense.items.forEach(item => {
-                    inventory[item.name].used -= item.quantity;
-                });
-            }
-            
-            expenses = expenses.filter(expense => expense.id !== id);
-            displayExpenses();
-            updateSummary();
-            updateStockDisplay();
-        }
+  const openEditModal = (souvenir) => {
+    setCurrentSouvenir(souvenir);
+    setSouvenirName(souvenir.name);
+    setSouvenirQuantity(souvenir.quantity);
+    setSouvenirImageUrl(souvenir.imageUrl);
+    setIsModalOpen(true);
+  };
 
-        function displayExpenses() {
-            const expenseList = document.getElementById('expenseList');
-            
-            if (expenses.length === 0) {
-                expenseList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">ยังไม่มีรายการ เริ่มเพิ่มรายการแรกของคุณเลย!</p>';
-                return;
-            }
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
 
-            const sortedExpenses = expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            expenseList.innerHTML = sortedExpenses.map(expense => `
-                <div class="expense-item">
-                    <div class="expense-info">
-                        <div class="expense-name">📝 รายการเบิก - ${expense.department}</div>
-                        <div class="expense-details">
-                            📅 ${formatDate(expense.date)}
-                            ${expense.notes ? ` | 📝 ${expense.notes}` : ''}
-                            <br>
-                            <div style="margin-top: 5px;">
-                                ${expense.items.map(item => 
-                                    `${getItemIcon(item.name)} ${item.name}: ${item.quantity} ชิ้น`
-                                ).join(' | ')}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center;">
-                        <div class="expense-quantity">${expense.totalQuantity.toLocaleString()} ชิ้น</div>
-                        <button class="delete-btn" onclick="deleteExpense(${expense.id})">ลบ</button>
-                    </div>
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!souvenirName.trim() || !souvenirQuantity || isNaN(souvenirQuantity) || parseInt(souvenirQuantity) < 0) {
+      showMessage('error', 'กรุณากรอกข้อมูลให้ถูกต้อง (ชื่อและจำนวนต้องเป็นตัวเลขที่ไม่ติดลบ)');
+      return;
+    }
+
+    const data = {
+      name: souvenirName.trim(),
+      quantity: parseInt(souvenirQuantity),
+      imageUrl: souvenirImageUrl.trim() || `https://placehold.co/100x100/CCCCCC/000000?text=${encodeURIComponent(souvenirName.trim())}`
+    };
+
+    if (currentSouvenir) {
+      updateSouvenir({ ...currentSouvenir, ...data });
+    } else {
+      addSouvenir(data);
+    }
+    closeModal();
+  };
+
+  const handleDeleteClick = (souvenir) => {
+    setSouvenirToDelete(souvenir);
+    setShowConfirmModal(true);
+  };
+
+  const confirmDelete = () => {
+    deleteSouvenir(souvenirToDelete.id);
+    setShowConfirmModal(false);
+    setSouvenirToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmModal(false);
+    setSouvenirToDelete(null);
+  };
+
+  return (
+    <div className="p-6 bg-white rounded-xl shadow-xl border border-gray-200">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-indigo-700">จัดการของที่ระลึก</h2>
+        <button
+          onClick={openAddModal}
+          className="flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md transform hover:scale-105"
+        >
+          <PlusCircle size={20} className="mr-2" /> เพิ่มของที่ระลึกใหม่
+        </button>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white rounded-lg overflow-hidden">
+          <thead className="bg-gray-100 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">รูปภาพ</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ชื่อของที่ระลึก</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">จำนวนคงเหลือ</th>
+              <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">การดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {souvenirs.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                  ยังไม่มีของที่ระลึกในระบบ
+                </td>
+              </tr>
+            ) : (
+              souvenirs.map(souvenir => (
+                <tr key={souvenir.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <img
+                      src={souvenir.imageUrl}
+                      alt={souvenir.name}
+                      className="w-16 h-16 object-cover rounded-md shadow-sm"
+                      onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/100x100/CCCCCC/000000?text=${encodeURIComponent(souvenir.name)}`; }}
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{souvenir.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${souvenir.quantity > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {souvenir.quantity} ชิ้น
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                    <button
+                      onClick={() => openEditModal(souvenir)}
+                      className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-200 mr-2 shadow-sm"
+                    >
+                      <Edit size={16} className="mr-1" /> แก้ไข
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(souvenir)}
+                      className="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-200 shadow-sm"
+                    >
+                      <Trash2 size={16} className="mr-1" /> ลบ
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Add/Edit Souvenir Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg border border-gray-200">
+            <h3 className="text-2xl font-bold text-indigo-700 mb-6">
+              {currentSouvenir ? 'แก้ไขของที่ระลึก' : 'เพิ่มของที่ระลึกใหม่'}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="souvenirName">
+                  ชื่อของที่ระลึก
+                </label>
+                <input
+                  type="text"
+                  id="souvenirName"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+                  value={souvenirName}
+                  onChange={(e) => setSouvenirName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="souvenirQuantity">
+                  จำนวนเริ่มต้น (ชิ้น)
+                </label>
+                <input
+                  type="number"
+                  id="souvenirQuantity"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+                  value={souvenirQuantity}
+                  onChange={(e) => setSouvenirQuantity(e.target.value)}
+                  min="0"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="souvenirImageUrl">
+                  URL รูปภาพ (ถ้ามี)
+                </label>
+                <input
+                  type="url"
+                  id="souvenirImageUrl"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+                  value={souvenirImageUrl}
+                  onChange={(e) => setSouvenirImageUrl(e.target.value)}
+                  placeholder="เช่น https://example.com/image.jpg"
+                />
+                {souvenirImageUrl && (
+                  <img src={souvenirImageUrl} alt="Preview" className="mt-4 w-24 h-24 object-cover rounded-md shadow-sm" />
+                )}
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition duration-200 shadow-md"
+                >
+                  <X size={18} className="inline-block mr-2" /> ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md"
+                >
+                  <Save size={18} className="inline-block mr-2" /> บันทึก
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Delete */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        message={`คุณแน่ใจหรือไม่ที่จะลบ "${souvenirToDelete?.name || 'รายการนี้'}"?`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
+    </div>
+  );
+}
+
+// --- DisbursementForm Component ---
+function DisbursementForm({ souvenirs, departments, addDisbursement, showMessage }) {
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [notes, setNotes] = useState('');
+  const [disbursementItems, setDisbursementItems] = useState([]); // { souvenirId, quantity }
+
+  const handleAddItem = () => {
+    setDisbursementItems(prev => [...prev, { souvenirId: '', quantity: 1 }]);
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...disbursementItems];
+    newItems[index][field] = value;
+    setDisbursementItems(newItems);
+  };
+
+  const handleRemoveItem = (index) => {
+    setDisbursementItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!selectedDepartment) {
+      showMessage('error', 'กรุณาเลือกหน่วยงาน');
+      return;
+    }
+    if (disbursementItems.length === 0) {
+      showMessage('error', 'กรุณาเพิ่มรายการของที่ระลึกที่เบิก');
+      return;
+    }
+
+    // Validate quantities and availability
+    for (const item of disbursementItems) {
+      if (!item.souvenirId || item.quantity <= 0 || isNaN(item.quantity)) {
+        showMessage('error', 'กรุณาเลือกของที่ระลึกและระบุจำนวนที่ถูกต้อง');
+        return;
+      }
+      const souvenirInStock = souvenirs.find(s => s.id === item.souvenirId);
+      if (!souvenirInStock || souvenirInStock.quantity < item.quantity) {
+        showMessage('error', `ของที่ระลึก "${souvenirInStock?.name || 'ไม่ทราบ'}" มีไม่พอในคลัง`);
+        return;
+      }
+    }
+
+    const newDisbursement = {
+      date: new Date().toISOString(),
+      department: selectedDepartment,
+      purpose,
+      notes,
+      items: disbursementItems.map(item => ({
+        souvenirId: item.souvenirId,
+        quantity: parseInt(item.quantity),
+        souvenirName: souvenirs.find(s => s.id === item.souvenirId)?.name || 'Unknown' // Store name for easier reporting
+      }))
+    };
+
+    addDisbursement(newDisbursement);
+
+    // Reset form
+    setSelectedDepartment('');
+    setPurpose('');
+    setNotes('');
+    setDisbursementItems([]);
+  };
+
+  return (
+    <div className="p-6 bg-white rounded-xl shadow-xl border border-gray-200">
+      <h2 className="text-3xl font-bold text-indigo-700 mb-6">บันทึกการเบิกจ่าย</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Department */}
+        <div>
+          <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="department">
+            หน่วยงาน <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="department"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            required
+          >
+            <option value="">-- เลือกหน่วยงาน --</option>
+            {departments.map((dept, index) => (
+              <option key={index} value={dept}>{dept}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Souvenir Items */}
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <Package size={20} className="mr-2" /> รายการของที่ระลึกที่เบิก <span className="text-red-500">*</span>
+          </h3>
+          {disbursementItems.map((item, index) => (
+            <div key={index} className="flex items-end space-x-3 mb-4 p-3 border border-gray-200 rounded-md bg-white shadow-sm">
+              <div className="flex-grow">
+                <label className="block text-gray-700 text-xs font-medium mb-1" htmlFor={`souvenir-${index}`}>
+                  ของที่ระลึก
+                </label>
+                <select
+                  id={`souvenir-${index}`}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-300"
+                  value={item.souvenirId}
+                  onChange={(e) => handleItemChange(index, 'souvenirId', e.target.value)}
+                  required
+                >
+                  <option value="">-- เลือกของที่ระลึก --</option>
+                  {souvenirs.map(s => (
+                    <option key={s.id} value={s.id} disabled={s.quantity <= 0}>
+                      {s.name} (คงเหลือ: {s.quantity} ชิ้น)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-700 text-xs font-medium mb-1" htmlFor={`quantity-${index}`}>
+                  จำนวน (ชิ้น)
+                </label>
+                <input
+                  type="number"
+                  id={`quantity-${index}`}
+                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-300"
+                  value={item.quantity}
+                  onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)}
+                  min="1"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveItem(index)}
+                className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-200 shadow-sm"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-200 shadow-md"
+          >
+            <PlusCircle size={16} className="mr-2" /> เพิ่มรายการ
+          </button>
+        </div>
+
+        {/* Purpose */}
+        <div>
+          <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="purpose">
+            วัตถุประสงค์
+          </label>
+          <input
+            type="text"
+            id="purpose"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+            value={purpose}
+            onChange={(e) => setPurpose(e.target.value)}
+          />
+        </div>
+
+        {/* Notes */}
+        <div>
+          <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="notes">
+            หมายเหตุ
+          </label>
+          <textarea
+            id="notes"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200 h-24"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          ></textarea>
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700 transition duration-200 shadow-lg transform hover:scale-105"
+        >
+          <Save size={20} className="inline-block mr-2" /> บันทึกการเบิกจ่าย
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// --- ReportSummary Component ---
+function ReportSummary({ disbursements, souvenirs, departments }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterSouvenir, setFilterSouvenir] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+
+  const getSouvenirNameById = (id) => souvenirs.find(s => s.id === id)?.name || 'ไม่พบของที่ระลึก';
+
+  const formatDateTime = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const filteredDisbursements = disbursements.filter(d => {
+    const matchesSearch = searchTerm === '' ||
+      d.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.items.some(item => item.souvenirName.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesDepartment = filterDepartment === '' || d.department === filterDepartment;
+    const matchesSouvenir = filterSouvenir === '' || d.items.some(item => item.souvenirId === filterSouvenir);
+
+    return matchesSearch && matchesDepartment && matchesSouvenir;
+  });
+
+  const sortedDisbursements = [...filteredDisbursements].sort((a, b) => {
+    if (sortConfig.key) {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'ascending' ? 1 : -1;
+      }
+    }
+    return 0;
+  });
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key === key) {
+      return sortConfig.direction === 'ascending' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+    }
+    return null;
+  };
+
+  // Data for Pie Chart: Souvenir remaining quantities
+  const pieChartData = souvenirs.map(s => ({
+    name: s.name,
+    value: s.quantity
+  }));
+
+  // Calculate summary of total items disbursed by type
+  const souvenirSummary = {};
+  disbursements.forEach(d => {
+    d.items.forEach(item => {
+      if (souvenirSummary[item.souvenirName]) {
+        souvenirSummary[item.souvenirName] += item.quantity;
+      } else {
+        souvenirSummary[item.souvenirName] = item.quantity;
+      }
+    });
+  });
+
+  // Export to PDF
+  const exportPdf = () => {
+    // Access jsPDF from global window object. Ensure jspdf and jspdf-autotable are loaded via CDN in the HTML.
+    // Example CDN script tags:
+    // <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    // <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+    if (typeof window.jsPDF === 'undefined' || typeof window.jspdf.autoTable === 'undefined') {
+      console.error("jsPDF or jspdf-autotable is not loaded. Please ensure the CDN scripts are included.");
+      return;
+    }
+
+    const doc = new window.jsPDF();
+    doc.setFont('THSarabunNew', 'normal'); // Set a Thai font if available, otherwise default
+    doc.text('รายงานสรุปการเบิกจ่ายของที่ระลึก', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`วันที่: ${new Date().toLocaleDateString('th-TH')}`, 14, 28);
+
+    const tableColumn = ["วันที่เบิก", "หน่วยงาน", "รายการของที่ระลึก (จำนวน)", "วัตถุประสงค์", "หมายเหตุ"];
+    const tableRows = [];
+
+    sortedDisbursements.forEach(d => {
+      const souvenirItems = d.items.map(item => `${item.souvenirName}: ${item.quantity} ชิ้น`).join('\n');
+      const rowData = [
+        formatDateTime(d.date),
+        d.department,
+        souvenirItems,
+        d.purpose || '-',
+        d.notes || '-'
+      ];
+      tableRows.push(rowData);
+    });
+
+    doc.autoTable(tableColumn, tableRows, { startY: 35 });
+    doc.save('รายงานการเบิกจ่ายของที่ระลึก.pdf');
+  };
+
+  // Export to CSV
+  const exportCsv = () => {
+    const headers = ["วันที่เบิก", "หน่วยงาน", "รายการของที่ระลึก", "จำนวน", "วัตถุประสงค์", "หมายเหตุ"];
+    const rows = [];
+
+    disbursements.forEach(d => {
+      d.items.forEach(item => {
+        rows.push([
+          `"${formatDateTime(d.date)}"`,
+          `"${d.department}"`,
+          `"${item.souvenirName}"`,
+          item.quantity,
+          `"${d.purpose || '-'}"`,
+          `"${d.notes || '-'}"`
+        ]);
+      });
+    });
+
+    let csvContent = headers.join(',') + '\n';
+    rows.forEach(row => {
+      csvContent += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) { // feature detection
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'รายงานการเบิกจ่ายของที่ระลึก.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+
+  return (
+    <div className="p-6 bg-white rounded-xl shadow-xl border border-gray-200">
+      <h2 className="text-3xl font-bold text-indigo-700 mb-6">รายงานสรุปการเบิกจ่าย</h2>
+
+      {/* Filters and Search */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg shadow-inner flex flex-wrap items-center gap-4">
+        <div className="flex-grow">
+          <label htmlFor="search" className="sr-only">ค้นหา</label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              id="search"
+              placeholder="ค้นหา (หน่วยงาน, วัตถุประสงค์, รายการของที่ระลึก)"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="w-full md:w-auto flex-shrink-0">
+          <label htmlFor="filterDepartment" className="sr-only">กรองตามหน่วยงาน</label>
+          <select
+            id="filterDepartment"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+          >
+            <option value="">-- กรองตามหน่วยงานทั้งหมด --</option>
+            {departments.map((dept, index) => (
+              <option key={index} value={dept}>{dept}</option>
+            ))}
+          </select>
+        </div>
+        <div className="w-full md:w-auto flex-shrink-0">
+          <label htmlFor="filterSouvenir" className="sr-only">กรองตามของที่ระลึก</label>
+          <select
+            id="filterSouvenir"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+            value={filterSouvenir}
+            onChange={(e) => setFilterSouvenir(e.target.value)}
+          >
+            <option value="">-- กรองตามของที่ระลึกทั้งหมด --</option>
+            {souvenirs.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Summary Section */}
+      <div className="mb-8 p-6 bg-blue-50 rounded-xl shadow-md border border-blue-200">
+        <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center">
+          <ClipboardList size={22} className="mr-2" /> สรุปจำนวนของที่ระลึกที่เบิกไปทั้งหมด
+        </h3>
+        {Object.keys(souvenirSummary).length === 0 ? (
+          <p className="text-gray-600">ยังไม่มีการเบิกจ่ายของที่ระลึก</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(souvenirSummary).map(([name, total]) => (
+              <div key={name} className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <span className="text-gray-700 font-medium">{name}:</span>
+                <span className="text-indigo-600 font-bold">{total} ชิ้น</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Remaining Souvenir Chart */}
+      <div className="mb-8 p-6 bg-purple-50 rounded-xl shadow-md border border-purple-200">
+        <h3 className="text-xl font-bold text-purple-700 mb-4 flex items-center">
+          <ImageIcon size={22} className="mr-2" /> สัดส่วนของที่ระลึกคงเหลือในคลัง
+        </h3>
+        {pieChartData.every(data => data.value === 0) ? (
+          <p className="text-gray-600 text-center">ไม่มีของที่ระลึกเหลือในคลัง หรือยังไม่มีข้อมูล</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={pieChartData.filter(data => data.value > 0)} // Filter out items with 0 quantity
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+              >
+                {pieChartData.filter(data => data.value > 0).map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value, name) => [`${value} ชิ้น`, name]} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Export Buttons */}
+      <div className="flex justify-end space-x-4 mb-6">
+        <button
+          onClick={exportPdf}
+          className="flex items-center px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow-md transform hover:scale-105"
+        >
+          <Printer size={20} className="mr-2" /> Export PDF
+        </button>
+        <button
+          onClick={exportCsv}
+          className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow-md transform hover:scale-105"
+        >
+          <List size={20} className="mr-2" /> Export CSV
+        </button>
+      </div>
+
+      {/* Disbursement List */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white rounded-lg overflow-hidden">
+          <thead className="bg-gray-100 border-b border-gray-200">
+            <tr>
+              <th
+                className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors duration-200"
+                onClick={() => requestSort('date')}
+              >
+                <div className="flex items-center">
+                  <CalendarDays size={14} className="mr-1" /> วันที่เบิก {getSortIcon('date')}
                 </div>
-            `).join('');
-        }
+              </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors duration-200"
+                onClick={() => requestSort('department')}
+              >
+                <div className="flex items-center">
+                  <Building2 size={14} className="mr-1" /> หน่วยงาน {getSortIcon('department')}
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <div className="flex items-center">
+                  <Package size={14} className="mr-1" /> รายการของที่ระลึก (จำนวน)
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <div className="flex items-center">
+                  <ScrollText size={14} className="mr-1" /> วัตถุประสงค์
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {sortedDisbursements.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                  ไม่พบข้อมูลการเบิกจ่าย
+                </td>
+              </tr>
+            ) : (
+              sortedDisbursements.map(d => (
+                <tr key={d.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatDateTime(d.date)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{d.department}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    <ul className="list-disc list-inside space-y-1">
+                      {d.items.map((item, idx) => (
+                        <li key={idx} className="text-gray-700">
+                          {item.souvenirName}: <span className="font-semibold text-indigo-600">{item.quantity} ชิ้น</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{d.purpose || '-'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{d.notes || '-'}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
-        function getItemIcon(itemName) {
-            const icons = {
-                'ถุงกระดาษ': '🛍️',
-                'แก้วเก็บความเย็น': '🥤',
-                'หมวก': '🧢',
-                'สมุดฉีก': '📝'
-            };
-            return icons[itemName] || '🎁';
-        }
-
-        function updateSummary() {
-            // สรุปตามรายการของที่ระลึก
-            const itemTotals = {};
-            expenses.forEach(expense => {
-                expense.items.forEach(item => {
-                    if (itemTotals[item.name]) {
-                        itemTotals[item.name] += item.quantity;
-                    } else {
-                        itemTotals[item.name] = item.quantity;
-                    }
-                });
-            });
-            
-            const itemSummary = document.getElementById('itemSummary');
-            if (Object.keys(itemTotals).length === 0) {
-                itemSummary.innerHTML = '<p style="color: rgba(255,255,255,0.8); padding: 20px;">ยังไม่มีข้อมูล</p>';
-            } else {
-                itemSummary.innerHTML = Object.entries(itemTotals)
-                    .map(([item, quantity]) => `
-                        <div class="summary-item">
-                            <span>${getItemIcon(item)} ${item}</span>
-                            <span class="summary-quantity">${quantity.toLocaleString()} ชิ้น</span>
-                        </div>
-                    `).join('');
-            }
-            
-            // สรุปตามหน่วยงาน
-            const departmentTotals = {};
-            expenses.forEach(expense => {
-                if (departmentTotals[expense.department]) {
-                    departmentTotals[expense.department] += expense.totalQuantity;
-                } else {
-                    departmentTotals[expense.department] = expense.totalQuantity;
-                }
-            });
-            
-            const departmentSummary = document.getElementById('departmentSummary');
-            if (Object.keys(departmentTotals).length === 0) {
-                departmentSummary.innerHTML = '<p style="color: #666; text-align: center;">ยังไม่มีข้อมูล</p>';
-            } else {
-                departmentSummary.innerHTML = Object.entries(departmentTotals)
-                    .sort(([,a], [,b]) => b - a) // เรียงจากมากไปน้อย
-                    .map(([department, quantity]) => `
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
-                            <span style="font-size: 13px;">${department}</span>
-                            <span style="font-weight: 600; color: #ff6b6b;">${quantity.toLocaleString()} ชิ้น</span>
-                        </div>
-                    `).join('');
-            }
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('th-TH');
-        }
-
-        // Event listener สำหรับฟอร์ม
-        document.getElementById('expenseForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // รวบรวมข้อมูลจำนวนแต่ละรายการ
-            const items = [];
-            let totalQuantity = 0;
-            
-            const bagQty = parseInt(document.getElementById('quantity_bag').value) || 0;
-            const cupQty = parseInt(document.getElementById('quantity_cup').value) || 0;
-            const hatQty = parseInt(document.getElementById('quantity_hat').value) || 0;
-            const notebookQty = parseInt(document.getElementById('quantity_notebook').value) || 0;
-            
-            if (bagQty > 0) {
-                items.push({ name: 'ถุงกระดาษ', quantity: bagQty });
-                totalQuantity += bagQty;
-            }
-            if (cupQty > 0) {
-                items.push({ name: 'แก้วเก็บความเย็น', quantity: cupQty });
-                totalQuantity += cupQty;
-            }
-            if (hatQty > 0) {
-                items.push({ name: 'หมวก', quantity: hatQty });
-                totalQuantity += hatQty;
-            }
-            if (notebookQty > 0) {
-                items.push({ name: 'สมุดฉีก', quantity: notebookQty });
-                totalQuantity += notebookQty;
-            }
-            
-            if (items.length === 0) {
-                alert('กรุณาระบุจำนวนของที่ระลึกอย่างน้อย 1 รายการ');
-                return;
-            }
-
-            // ตรวจสอบสต็อกก่อนบันทึก
-            const stockErrors = [];
-            items.forEach(item => {
-                const remaining = inventory[item.name].stock - inventory[item.name].used;
-                if (item.quantity > remaining) {
-                    stockErrors.push(`${item.name} (ต้องการ ${item.quantity} แต่คงเหลือ ${remaining})`);
-                }
-            });
-            
-            if (stockErrors.length > 0) {
-                alert(`สต็อกไม่เพียงพอ:\n${stockErrors.join('\n')}`);
-                return;
-            }
-            
-            const expense = {
-                id: nextId++,
-                items: items,
-                totalQuantity: totalQuantity,
-                department: document.getElementById('department').value,
-                date: document.getElementById('date').value,
-                notes: document.getElementById('notes').value
-            };
-            
-            addExpense(expense);
-            
-            // รีเซ็ตฟอร์ม
-            this.reset();
-            updateTotalQuantity();
-            
-            // แสดงข้อความสำเร็จ
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = '✅ บันทึกสำเร็จ!';
-            submitBtn.style.background = '#28a745';
-            
-            setTimeout(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.style.background = 'linear-gradient(45deg, #ff6b6b, #ffa726)';
-            }, 2000);
-        });
-
-        // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
-        document.getElementById('date').valueAsDate = new Date();
-    </script>
-</body>
-</html>
+// Export the main App component as default
+export default App;
