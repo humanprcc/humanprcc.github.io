@@ -15,69 +15,50 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: #333;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+            padding: 20px;
         }
 
         .header {
-            background: linear-gradient(45deg, #ff6b6b, #ffa726);
-            color: white;
-            padding: 30px;
             text-align: center;
+            color: white;
+            margin-bottom: 30px;
         }
 
         .header h1 {
-            font-size: 2.5em;
+            font-size: 2.5rem;
             margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+        .auth-section {
+            background: white;
+            border-radius: 15px;
             padding: 30px;
-        }
-
-        .card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card h3 {
-            color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 20px;
-            font-size: 1.5em;
-            border-bottom: 3px solid #ff6b6b;
-            padding-bottom: 10px;
+        }
+
+        .main-section {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: #555;
         }
@@ -87,184 +68,163 @@
             padding: 12px;
             border: 2px solid #e1e5e9;
             border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
 
         input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: #ff6b6b;
+            border-color: #667eea;
         }
 
         button {
-            background: linear-gradient(45deg, #ff6b6b, #ffa726);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 25px;
+            padding: 12px 24px;
             border-radius: 8px;
-            cursor: pointer;
             font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .souvenir-select {
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .souvenir-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        .souvenir-item {
+        .souvenir-card {
             border: 2px solid #e1e5e9;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 15px;
-            background: white;
-            transition: all 0.3s ease;
-        }
-
-        .souvenir-item:hover {
-            border-color: #ff6b6b;
-            transform: translateY(-2px);
-        }
-
-        .souvenir-info {
             text-align: center;
-            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .souvenir-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .souvenir-card.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
         }
 
         .souvenir-image {
-            width: 50px;
-            height: 50px;
+            width: 80px;
+            height: 80px;
             background: #f0f0f0;
             border-radius: 8px;
-            margin: 0 auto 8px;
+            margin: 0 auto 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-        }
-
-        .souvenir-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 13px;
-        }
-
-        .quantity-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        .quantity-input:focus {
-            border-color: #ff6b6b;
-            outline: none;
+            font-size: 2rem;
+            color: #666;
         }
 
         .expense-list {
-            grid-column: span 2;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
         }
 
         .expense-item {
             background: white;
-            border: 1px solid #e1e5e9;
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .expense-item:hover {
-            border-color: #ff6b6b;
-            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.1);
-        }
-
-        .expense-info {
-            flex-grow: 1;
-        }
-
-        .expense-name {
-            font-weight: 600;
-            color: #333;
+        .expense-item h4 {
+            color: #667eea;
             margin-bottom: 5px;
         }
 
-        .expense-details {
-            color: #666;
-            font-size: 14px;
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        .expense-quantity {
-            font-size: 18px;
-            font-weight: 700;
-            color: #ff6b6b;
-        }
-
-        .delete-btn {
-            background: #dc3545;
-            padding: 8px 15px;
-            font-size: 14px;
-            margin-left: 15px;
-        }
-
-        .delete-btn:hover {
-            background: #c82333;
-        }
-
-        .summary {
-            background: linear-gradient(45deg, #28a745, #20c997);
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 12px;
             text-align: center;
-            margin-top: 20px;
         }
 
-        .summary h4 {
-            font-size: 1.3em;
-            margin-bottom: 15px;
+        .summary-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
         }
 
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+        .hidden {
+            display: none;
         }
 
-        .summary-item:last-child {
-            border-bottom: none;
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
         }
 
-        .summary-quantity {
-            font-weight: 700;
-            font-size: 1.1em;
+        .logout-btn:hover {
+            background: white;
+            color: #667eea;
         }
 
         @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
+            .container {
+                padding: 10px;
             }
             
-            .expense-list {
-                grid-column: span 1;
+            .header h1 {
+                font-size: 2rem;
             }
-
-            .souvenir-select {
-                grid-template-columns: repeat(2, 1fr);
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+            
+            .souvenir-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
         }
     </style>
@@ -273,49 +233,90 @@
     <div class="container">
         <div class="header">
             <h1>🎁 ระบบจัดการเบิกจ่ายของที่ระลึก</h1>
-            <p>บันทึกและติดตามการเบิกของที่ระลึกจากคลังของหน่วยงาน</p>
+            <p>สำหรับจัดการและติดตามการเบิกของที่ระลึกของหน่วยงาน</p>
+            <button class="logout-btn hidden" onclick="logout()">ออกจากระบบ</button>
         </div>
 
-        <div class="main-content">
-            <div class="card">
-                <h3>เพิ่มรายการเบิก</h3>
-                <form id="expenseForm">
-                    <div class="form-group">
-                        <label>เลือกของที่ระลึกและระบุจำนวน:</label>
-                        <div class="souvenir-select">
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">🛍️</div>
-                                    <div class="souvenir-name">ถุงกระดาษ</div>
-                                </div>
-                                <input type="number" id="quantity_bag" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">🥤</div>
-                                    <div class="souvenir-name">แก้วเก็บความเย็น</div>
-                                </div>
-                                <input type="number" id="quantity_cup" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">🧢</div>
-                                    <div class="souvenir-name">หมวก</div>
-                                </div>
-                                <input type="number" id="quantity_hat" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                            <div class="souvenir-item">
-                                <div class="souvenir-info">
-                                    <div class="souvenir-image">📝</div>
-                                    <div class="souvenir-name">สมุดฉีก</div>
-                                </div>
-                                <input type="number" id="quantity_notebook" min="0" placeholder="จำนวน" class="quantity-input">
-                            </div>
-                        </div>
+        <!-- Authentication Section -->
+        <div class="auth-section" id="auth-section">
+            <div id="login-form">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">เข้าสู่ระบบ</h2>
+                <div class="form-group">
+                    <label>ชื่อผู้ใช้:</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label>รหัสผ่าน:</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button onclick="login()">เข้าสู่ระบบ</button>
+                <button onclick="showRegister()">สมัครสมาชิก</button>
+            </div>
+
+            <div id="register-form" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">สมัครสมาชิก</h2>
+                <div class="form-group">
+                    <label>ชื่อผู้ใช้:</label>
+                    <input type="text" id="register-username" required>
+                </div>
+                <div class="form-group">
+                    <label>รหัสผ่าน:</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <label>ยืนยันรหัสผ่าน:</label>
+                    <input type="password" id="register-confirm" required>
+                </div>
+                <div class="form-group">
+                    <label>ชื่อ-นามสกุล:</label>
+                    <input type="text" id="register-fullname" required>
+                </div>
+                <button onclick="register()">สมัครสมาชิก</button>
+                <button onclick="showLogin()">กลับไปเข้าสู่ระบบ</button>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div class="main-section" id="main-section">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('withdraw')">เบิกของที่ระลึก</button>
+                <button class="tab-button" onclick="showTab('history')">ประวัติการเบิก</button>
+                <button class="tab-button" onclick="showTab('summary')">สรุปรายงาน</button>
+            </div>
+
+            <!-- Withdraw Tab -->
+            <div id="withdraw-tab">
+                <h3 style="margin-bottom: 20px; color: #667eea;">เลือกของที่ระลึก</h3>
+                
+                <div class="souvenir-grid" id="souvenir-grid">
+                    <div class="souvenir-card" data-item="ถุงกระดาษ" onclick="selectSouvenir(this)">
+                        <div class="souvenir-image">🛍️</div>
+                        <h4>ถุงกระดาษ</h4>
                     </div>
+                    <div class="souvenir-card" data-item="แก้วเก็บความเย็น" onclick="selectSouvenir(this)">
+                        <div class="souvenir-image">🥤</div>
+                        <h4>แก้วเก็บความเย็น</h4>
+                    </div>
+                    <div class="souvenir-card" data-item="หมวก" onclick="selectSouvenir(this)">
+                        <div class="souvenir-image">🧢</div>
+                        <h4>หมวก</h4>
+                    </div>
+                    <div class="souvenir-card" data-item="สมุดฉีก" onclick="selectSouvenir(this)">
+                        <div class="souvenir-image">📔</div>
+                        <h4>สมุดฉีก</h4>
+                    </div>
+                </div>
+
+                <div id="withdraw-form" class="hidden">
+                    <h3 style="margin-bottom: 20px; color: #667eea;">รายละเอียดการเบิก</h3>
                     
                     <div class="form-group">
-                        <label for="department">หน่วยงาน:</label>
+                        <label>ของที่ระลึกที่เลือก:</label>
+                        <input type="text" id="selected-item" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>หน่วยงาน:</label>
                         <select id="department" required>
                             <option value="">เลือกหน่วยงาน</option>
                             <option value="งานบริหารทั่วไป">งานบริหารทั่วไป</option>
@@ -338,367 +339,326 @@
                             <option value="ศูนย์บูรณาการมนุษยาภิวัฒน์">ศูนย์บูรณาการมนุษยาภิวัฒน์</option>
                         </select>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="quantity">จำนวนรวม (ชิ้น):</label>
-                        <input type="number" id="totalQuantity" readonly style="background: #f8f9fa; color: #666;">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="date">วันที่เบิก:</label>
-                        <input type="date" id="date" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="notes">หมายเหตุ:</label>
-                        <textarea id="notes" rows="3" placeholder="ระบุวัตถุประสงค์ในการเบิก หรือรายละเอียดเพิ่มเติม"></textarea>
-                    </div>
-                    
-                    <button type="submit">บันทึกรายการเบิก</button>
-                </form>
-            </div>
 
-            <div class="card">
-                <h3>สรุปรายการ</h3>
-                
-                <!-- สต็อกคงเหลือ -->
-                <div style="background: linear-gradient(45deg, #17a2b8, #20c997); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h4>📦 สต็อกคงเหลือ</h4>
-                    <div id="stockSummary">
-                        <div class="summary-item">
-                            <span>🛍️ ถุงกระดาษ</span>
-                            <span class="summary-quantity">150 ชิ้น</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>🥤 แก้วเก็บความเย็น</span>
-                            <span class="summary-quantity">100 ชิ้น</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>🧢 หมวก</span>
-                            <span class="summary-quantity">40 ชิ้น</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>📝 สมุดฉีก</span>
-                            <span class="summary-quantity">30 ชิ้น</span>
-                        </div>
+                    <div class="form-group">
+                        <label>จำนวน (ชิ้น):</label>
+                        <input type="number" id="quantity" min="1" required>
                     </div>
-                </div>
 
-                <div class="summary">
-                    <h4>📊 สถิติการเบิกของที่ระลึก</h4>
-                    <div id="itemSummary">
-                        <p style="color: rgba(255,255,255,0.8); padding: 20px;">ยังไม่มีข้อมูล</p>
+                    <div class="form-group">
+                        <label>วัตถุประสงค์:</label>
+                        <textarea id="purpose" rows="3" placeholder="ระบุวัตถุประสงค์ในการใช้งาน"></textarea>
                     </div>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <h4>สรุปตามหน่วยงาน:</h4>
-                    <div id="departmentSummary">
-                        <p style="text-align: center; color: #666; padding: 20px;">ยังไม่มีข้อมูล</p>
+
+                    <div class="form-group">
+                        <label>หมายเหตุ:</label>
+                        <textarea id="notes" rows="2" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea>
                     </div>
+
+                    <button onclick="submitWithdraw()">บันทึกการเบิก</button>
+                    <button onclick="cancelWithdraw()">ยกเลิก</button>
                 </div>
             </div>
 
-            <div class="card expense-list">
-                <h3>รายการการเบิก</h3>
-                <div id="expenseList">
-                    <p style="text-align: center; color: #666; padding: 20px;">ยังไม่มีรายการ เริ่มเพิ่มรายการแรกของคุณเลย!</p>
+            <!-- History Tab -->
+            <div id="history-tab" class="hidden">
+                <h3 style="margin-bottom: 20px; color: #667eea;">ประวัติการเบิกของที่ระลึก</h3>
+                <div class="expense-list" id="expense-list">
+                    <p style="text-align: center; color: #666;">ยังไม่มีประวัติการเบิก</p>
                 </div>
+            </div>
+
+            <!-- Summary Tab -->
+            <div id="summary-tab" class="hidden">
+                <h3 style="margin-bottom: 20px; color: #667eea;">สรุปรายงานการเบิก</h3>
+                
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3 id="total-withdrawals">0</h3>
+                        <p>รายการเบิกทั้งหมด</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3 id="total-items">0</h3>
+                        <p>จำนวนชิ้นทั้งหมด</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3 id="most-popular">-</h3>
+                        <p>ของที่ระลึกยอดนิยม</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3 id="active-departments">0</h3>
+                        <p>หน่วยงานที่เบิก</p>
+                    </div>
+                </div>
+
+                <div id="summary-details"></div>
             </div>
         </div>
     </div>
 
     <script>
-        let expenses = [];
-        let nextId = 1;
+        // Global variables
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('users') || '{}');
+        let withdrawals = JSON.parse(localStorage.getItem('withdrawals') || '[]');
+        let selectedSouvenirItem = null;
 
-        // ระบบจัดการสต็อก
-        let inventory = {
-            'ถุงกระดาษ': { stock: 150, used: 0 },
-            'แก้วเก็บความเย็น': { stock: 100, used: 0 },
-            'หมวก': { stock: 40, used: 0 },
-            'สมุดฉีก': { stock: 30, used: 0 }
-        };
-
-        // อัปเดตการแสดงผลสต็อก
-        function updateStockDisplay() {
-            const stockItems = [
-                { id: 'quantity_bag', item: 'ถุงกระดาษ' },
-                { id: 'quantity_cup', item: 'แก้วเก็บความเย็น' },
-                { id: 'quantity_hat', item: 'หมวก' },
-                { id: 'quantity_notebook', item: 'สมุดฉีก' }
-            ];
-
-            stockItems.forEach(({ id, item }) => {
-                const input = document.getElementById(id);
-                const remaining = inventory[item].stock - inventory[item].used;
-                input.setAttribute('max', remaining);
-                input.setAttribute('placeholder', `คงเหลือ ${remaining.toLocaleString()}`);
-                
-                // เปลี่ยนสีถ้าสต็อกน้อย
-                const parent = input.closest('.souvenir-item');
-                if (remaining <= 50) {
-                    parent.style.borderColor = '#dc3545';
-                    parent.style.background = '#fff5f5';
-                } else if (remaining <= 100) {
-                    parent.style.borderColor = '#ffc107';
-                    parent.style.background = '#fffdf5';
-                } else {
-                    parent.style.borderColor = '#e1e5e9';
-                    parent.style.background = 'white';
-                }
-            });
+        // Authentication functions
+        function showLogin() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
         }
 
-        // อัปเดตจำนวนรวม
-        function updateTotalQuantity() {
-            const bag = parseInt(document.getElementById('quantity_bag').value) || 0;
-            const cup = parseInt(document.getElementById('quantity_cup').value) || 0;
-            const hat = parseInt(document.getElementById('quantity_hat').value) || 0;
-            const notebook = parseInt(document.getElementById('quantity_notebook').value) || 0;
-            
-            const total = bag + cup + hat + notebook;
-            document.getElementById('totalQuantity').value = total;
-
-            // ตรวจสอบสต็อกไม่เพียงพอ
-            const stockWarnings = [];
-            if (bag > (inventory['ถุงกระดาษ'].stock - inventory['ถุงกระดาษ'].used)) {
-                stockWarnings.push('ถุงกระดาษ');
-            }
-            if (cup > (inventory['แก้วเก็บความเย็น'].stock - inventory['แก้วเก็บความเย็น'].used)) {
-                stockWarnings.push('แก้วเก็บความเย็น');
-            }
-            if (hat > (inventory['หมวก'].stock - inventory['หมวก'].used)) {
-                stockWarnings.push('หมวก');
-            }
-            if (notebook > (inventory['สมุดฉีก'].stock - inventory['สมุดฉีก'].used)) {
-                stockWarnings.push('สมุดฉีก');
-            }
-
-            const totalField = document.getElementById('totalQuantity');
-            if (stockWarnings.length > 0) {
-                totalField.style.borderColor = '#dc3545';
-                totalField.style.background = '#fff5f5';
-                totalField.title = `สต็อกไม่เพียงพอ: ${stockWarnings.join(', ')}`;
-            } else {
-                totalField.style.borderColor = '#28a745';
-                totalField.style.background = '#f8fff8';
-                totalField.title = '';
-            }
+        function showRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
         }
 
-        // Event listeners สำหรับ quantity inputs
-        document.querySelectorAll('.quantity-input').forEach(input => {
-            input.addEventListener('input', updateTotalQuantity);
-        });
+        function register() {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+            const fullname = document.getElementById('register-fullname').value;
 
-        // เริ่มต้นแสดงสต็อก
-        updateStockDisplay();
-
-        function addExpense(expense) {
-            // ตัดสต็อก
-            expense.items.forEach(item => {
-                inventory[item.name].used += item.quantity;  
-            });
-            
-            expenses.push(expense);
-            displayExpenses();
-            updateSummary();
-            updateStockDisplay();
-        }
-
-        function deleteExpense(id) {
-            const expense = expenses.find(e => e.id === id);
-            if (expense) {
-                // คืนสต็อก
-                expense.items.forEach(item => {
-                    inventory[item.name].used -= item.quantity;
-                });
-            }
-            
-            expenses = expenses.filter(expense => expense.id !== id);
-            displayExpenses();
-            updateSummary();
-            updateStockDisplay();
-        }
-
-        function displayExpenses() {
-            const expenseList = document.getElementById('expenseList');
-            
-            if (expenses.length === 0) {
-                expenseList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">ยังไม่มีรายการ เริ่มเพิ่มรายการแรกของคุณเลย!</p>';
+            if (!username || !password || !fullname) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
                 return;
             }
 
-            const sortedExpenses = expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (password !== confirm) {
+                alert('รหัสผ่านไม่ตรงกัน');
+                return;
+            }
+
+            if (users[username]) {
+                alert('ชื่อผู้ใช้นี้มีอยู่แล้ว');
+                return;
+            }
+
+            users[username] = {
+                password: password,
+                fullname: fullname,
+                registerDate: new Date().toISOString()
+            };
+
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+            showLogin();
+        }
+
+        function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!username || !password) {
+                alert('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+                return;
+            }
+
+            if (!users[username] || users[username].password !== password) {
+                alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                return;
+            }
+
+            currentUser = username;
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('main-section').style.display = 'block';
+            document.querySelector('.logout-btn').classList.remove('hidden');
             
-            expenseList.innerHTML = sortedExpenses.map(expense => `
+            loadData();
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('main-section').style.display = 'none';
+            document.querySelector('.logout-btn').classList.add('hidden');
+            
+            // Clear forms
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            showLogin();
+        }
+
+        // Tab functions
+        function showTab(tabName) {
+            // Hide all tabs
+            document.getElementById('withdraw-tab').classList.add('hidden');
+            document.getElementById('history-tab').classList.add('hidden');
+            document.getElementById('summary-tab').classList.add('hidden');
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Load data for specific tabs
+            if (tabName === 'history') {
+                loadHistory();
+            } else if (tabName === 'summary') {
+                loadSummary();
+            }
+        }
+
+        // Souvenir selection
+        function selectSouvenir(card) {
+            // Remove previous selection
+            document.querySelectorAll('.souvenir-card').forEach(c => c.classList.remove('selected'));
+            
+            // Select current card
+            card.classList.add('selected');
+            selectedSouvenirItem = card.dataset.item;
+            
+            // Show form
+            document.getElementById('selected-item').value = selectedSouvenirItem;
+            document.getElementById('withdraw-form').classList.remove('hidden');
+        }
+
+        function cancelWithdraw() {
+            // Clear selection
+            document.querySelectorAll('.souvenir-card').forEach(c => c.classList.remove('selected'));
+            selectedSouvenirItem = null;
+            
+            // Hide form and clear inputs
+            document.getElementById('withdraw-form').classList.add('hidden');
+            document.getElementById('withdraw-form').querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.id !== 'selected-item') input.value = '';
+            });
+        }
+
+        function submitWithdraw() {
+            if (!selectedSouvenirItem) {
+                alert('กรุณาเลือกของที่ระลึก');
+                return;
+            }
+
+            const department = document.getElementById('department').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const purpose = document.getElementById('purpose').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!department || !quantity || !purpose) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            const withdrawal = {
+                id: Date.now(),
+                user: currentUser,
+                item: selectedSouvenirItem,
+                department: department,
+                quantity: quantity,
+                purpose: purpose,
+                notes: notes,
+                date: new Date().toISOString(),
+                dateDisplay: new Date().toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            };
+
+            withdrawals.push(withdrawal);
+            localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+
+            alert('บันทึกการเบิกสำเร็จ!');
+            cancelWithdraw();
+        }
+
+        // History functions
+        function loadHistory() {
+            const userWithdrawals = withdrawals.filter(w => w.user === currentUser);
+            const expenseList = document.getElementById('expense-list');
+
+            if (userWithdrawals.length === 0) {
+                expenseList.innerHTML = '<p style="text-align: center; color: #666;">ยังไม่มีประวัติการเบิก</p>';
+                return;
+            }
+
+            expenseList.innerHTML = userWithdrawals.map(w => `
                 <div class="expense-item">
-                    <div class="expense-info">
-                        <div class="expense-name">📝 รายการเบิก - ${expense.department}</div>
-                        <div class="expense-details">
-                            📅 ${formatDate(expense.date)}
-                            ${expense.notes ? ` | 📝 ${expense.notes}` : ''}
-                            <br>
-                            <div style="margin-top: 5px;">
-                                ${expense.items.map(item => 
-                                    `${getItemIcon(item.name)} ${item.name}: ${item.quantity} ชิ้น`
-                                ).join(' | ')}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center;">
-                        <div class="expense-quantity">${expense.totalQuantity.toLocaleString()} ชิ้น</div>
-                        <button class="delete-btn" onclick="deleteExpense(${expense.id})">ลบ</button>
-                    </div>
+                    <h4>${w.item} - ${w.quantity} ชิ้น</h4>
+                    <p><strong>หน่วยงาน:</strong> ${w.department}</p>
+                    <p><strong>วัตถุประสงค์:</strong> ${w.purpose}</p>
+                    ${w.notes ? `<p><strong>หมายเหตุ:</strong> ${w.notes}</p>` : ''}
+                    <p><small><strong>วันที่เบิก:</strong> ${w.dateDisplay}</small></p>
                 </div>
             `).join('');
         }
 
-        function getItemIcon(itemName) {
-            const icons = {
-                'ถุงกระดาษ': '🛍️',
-                'แก้วเก็บความเย็น': '🥤',
-                'หมวก': '🧢',
-                'สมุดฉีก': '📝'
-            };
-            return icons[itemName] || '🎁';
-        }
+        // Summary functions
+        function loadSummary() {
+            const userWithdrawals = withdrawals.filter(w => w.user === currentUser);
+            
+            // Calculate statistics
+            const totalWithdrawals = userWithdrawals.length;
+            const totalItems = userWithdrawals.reduce((sum, w) => sum + w.quantity, 0);
+            
+            // Most popular item
+            const itemCounts = {};
+            userWithdrawals.forEach(w => {
+                itemCounts[w.item] = (itemCounts[w.item] || 0) + w.quantity;
+            });
+            const mostPopular = Object.keys(itemCounts).length > 0 
+                ? Object.keys(itemCounts).reduce((a, b) => itemCounts[a] > itemCounts[b] ? a : b)
+                : '-';
+            
+            // Active departments
+            const departments = new Set(userWithdrawals.map(w => w.department));
+            const activeDepartments = departments.size;
 
-        function updateSummary() {
-            // สรุปตามรายการของที่ระลึก
-            const itemTotals = {};
-            expenses.forEach(expense => {
-                expense.items.forEach(item => {
-                    if (itemTotals[item.name]) {
-                        itemTotals[item.name] += item.quantity;
-                    } else {
-                        itemTotals[item.name] = item.quantity;
-                    }
+            // Update summary cards
+            document.getElementById('total-withdrawals').textContent = totalWithdrawals;
+            document.getElementById('total-items').textContent = totalItems;
+            document.getElementById('most-popular').textContent = mostPopular;
+            document.getElementById('active-departments').textContent = activeDepartments;
+
+            // Create detailed summary
+            const summaryDetails = document.getElementById('summary-details');
+            
+            if (userWithdrawals.length > 0) {
+                let detailsHTML = '<h4 style="color: #667eea; margin-bottom: 15px;">รายละเอียดการเบิกแยกตามประเภท</h4>';
+                
+                // Group by item
+                const itemGroups = {};
+                userWithdrawals.forEach(w => {
+                    if (!itemGroups[w.item]) itemGroups[w.item] = [];
+                    itemGroups[w.item].push(w);
                 });
-            });
-            
-            const itemSummary = document.getElementById('itemSummary');
-            if (Object.keys(itemTotals).length === 0) {
-                itemSummary.innerHTML = '<p style="color: rgba(255,255,255,0.8); padding: 20px;">ยังไม่มีข้อมูล</p>';
-            } else {
-                itemSummary.innerHTML = Object.entries(itemTotals)
-                    .map(([item, quantity]) => `
-                        <div class="summary-item">
-                            <span>${getItemIcon(item)} ${item}</span>
-                            <span class="summary-quantity">${quantity.toLocaleString()} ชิ้น</span>
+
+                Object.keys(itemGroups).forEach(item => {
+                    const totalQty = itemGroups[item].reduce((sum, w) => sum + w.quantity, 0);
+                    const deptSet = new Set(itemGroups[item].map(w => w.department));
+                    
+                    detailsHTML += `
+                        <div style="background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <h5 style="color: #667eea;">${item}</h5>
+                            <p>จำนวนทั้งหมด: ${totalQty} ชิ้น</p>
+                            <p>หน่วยงานที่เบิก: ${deptSet.size} หน่วยงาน</p>
                         </div>
-                    `).join('');
-            }
-            
-            // สรุปตามหน่วยงาน
-            const departmentTotals = {};
-            expenses.forEach(expense => {
-                if (departmentTotals[expense.department]) {
-                    departmentTotals[expense.department] += expense.totalQuantity;
-                } else {
-                    departmentTotals[expense.department] = expense.totalQuantity;
-                }
-            });
-            
-            const departmentSummary = document.getElementById('departmentSummary');
-            if (Object.keys(departmentTotals).length === 0) {
-                departmentSummary.innerHTML = '<p style="color: #666; text-align: center;">ยังไม่มีข้อมูล</p>';
+                    `;
+                });
+
+                summaryDetails.innerHTML = detailsHTML;
             } else {
-                departmentSummary.innerHTML = Object.entries(departmentTotals)
-                    .sort(([,a], [,b]) => b - a) // เรียงจากมากไปน้อย
-                    .map(([department, quantity]) => `
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
-                            <span style="font-size: 13px;">${department}</span>
-                            <span style="font-weight: 600; color: #ff6b6b;">${quantity.toLocaleString()} ชิ้น</span>
-                        </div>
-                    `).join('');
+                summaryDetails.innerHTML = '<p style="text-align: center; color: #666;">ยังไม่มีข้อมูลสำหรับสรุป</p>';
             }
         }
 
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('th-TH');
+        function loadData() {
+            // Load any initial data if needed
+            console.log('Loading data for user:', currentUser);
         }
 
-        // Event listener สำหรับฟอร์ม
-        document.getElementById('expenseForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // รวบรวมข้อมูลจำนวนแต่ละรายการ
-            const items = [];
-            let totalQuantity = 0;
-            
-            const bagQty = parseInt(document.getElementById('quantity_bag').value) || 0;
-            const cupQty = parseInt(document.getElementById('quantity_cup').value) || 0;
-            const hatQty = parseInt(document.getElementById('quantity_hat').value) || 0;
-            const notebookQty = parseInt(document.getElementById('quantity_notebook').value) || 0;
-            
-            if (bagQty > 0) {
-                items.push({ name: 'ถุงกระดาษ', quantity: bagQty });
-                totalQuantity += bagQty;
-            }
-            if (cupQty > 0) {
-                items.push({ name: 'แก้วเก็บความเย็น', quantity: cupQty });
-                totalQuantity += cupQty;
-            }
-            if (hatQty > 0) {
-                items.push({ name: 'หมวก', quantity: hatQty });
-                totalQuantity += hatQty;
-            }
-            if (notebookQty > 0) {
-                items.push({ name: 'สมุดฉีก', quantity: notebookQty });
-                totalQuantity += notebookQty;
-            }
-            
-            if (items.length === 0) {
-                alert('กรุณาระบุจำนวนของที่ระลึกอย่างน้อย 1 รายการ');
-                return;
-            }
-
-            // ตรวจสอบสต็อกก่อนบันทึก
-            const stockErrors = [];
-            items.forEach(item => {
-                const remaining = inventory[item.name].stock - inventory[item.name].used;
-                if (item.quantity > remaining) {
-                    stockErrors.push(`${item.name} (ต้องการ ${item.quantity} แต่คงเหลือ ${remaining})`);
-                }
-            });
-            
-            if (stockErrors.length > 0) {
-                alert(`สต็อกไม่เพียงพอ:\n${stockErrors.join('\n')}`);
-                return;
-            }
-            
-            const expense = {
-                id: nextId++,
-                items: items,
-                totalQuantity: totalQuantity,
-                department: document.getElementById('department').value,
-                date: document.getElementById('date').value,
-                notes: document.getElementById('notes').value
-            };
-            
-            addExpense(expense);
-            
-            // รีเซ็ตฟอร์ม
-            this.reset();
-            updateTotalQuantity();
-            
-            // แสดงข้อความสำเร็จ
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = '✅ บันทึกสำเร็จ!';
-            submitBtn.style.background = '#28a745';
-            
-            setTimeout(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.style.background = 'linear-gradient(45deg, #ff6b6b, #ffa726)';
-            }, 2000);
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default tab
+            showTab('withdraw');
         });
-
-        // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
-        document.getElementById('date').valueAsDate = new Date();
     </script>
 </body>
 </html>
